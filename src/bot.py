@@ -189,20 +189,23 @@ class ClaudeDiscordBot(commands.Bot):
         embed = discord.Embed(title=title, color=color)
         embed.add_field(name="⏱️ 소요 시간", value=f"{elapsed:.1f}초", inline=True)
 
-        max_length = self.config_manager.max_output_length
+        # Discord 제한: embed description 4096자, 일반 메시지 2000자
+        # 코드블록 마크업(```\n, \n```) 고려하여 안전 마진 확보
+        EMBED_MAX = 4000  # embed description 최대 길이
+        MESSAGE_MAX = 1900  # 일반 메시지 최대 길이 (코드블록 마크업 포함)
 
-        if len(output) <= max_length:
+        if len(output) <= EMBED_MAX:
             embed.description = f"```\n{output}\n```"
             await message.reply(embed=embed)
         else:
             # 분할 전송
-            embed.description = f"```\n{output[:max_length]}\n```\n*(분할됨)*"
+            embed.description = f"```\n{output[:EMBED_MAX]}\n```\n*(분할됨)*"
             await message.reply(embed=embed)
 
-            remaining = output[max_length:]
+            remaining = output[EMBED_MAX:]
             while remaining:
-                chunk = remaining[:max_length]
-                remaining = remaining[max_length:]
+                chunk = remaining[:MESSAGE_MAX]
+                remaining = remaining[MESSAGE_MAX:]
                 await message.channel.send(f"```\n{chunk}\n```")
 
     # === 명령어 등록 ===
